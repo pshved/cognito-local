@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import { InvalidParameterError } from "../errors";
+import { InvalidParameterError, UserNotFoundError } from "../errors";
 import { Logger } from "../log";
 import { Services } from "../services";
 import { Token } from "../services/tokens";
@@ -27,15 +27,15 @@ export const GetUser = (
     throw new InvalidParameterError();
   }
 
-  const { sub, client_id } = decodedToken;
+  const { sub, client_id, username } = decodedToken;
   if (!sub || !client_id) {
     return null;
   }
 
   const userPool = await cognitoClient.getUserPoolForClientId(client_id);
-  const user = await userPool.getUserByUsername(sub);
+  const user = await userPool.getUserByUsername(username);
   if (!user) {
-    return null;
+    throw new UserNotFoundError(username);
   }
 
   const output: Output = {
